@@ -1,0 +1,51 @@
+name: Public dashboard Pages
+run-name: Dashboard ${{ inputs.release_hash }}
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        required: true
+        type: string
+      release_hash:
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: public-dashboard-pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: ${{ vars.PUBLIC_DASHBOARD_ENABLED == 'true' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check exact commit and stage only public files
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          RELEASE_HASH: ${{ inputs.release_hash }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          [[ "$RELEASE_HASH" =~ ^[a-f0-9]{64}$ ]]
+          mkdir _site
+          for file in index.html style.css app.js placeholder.svg public.json .nojekyll; do
+            test -f "$file" && test ! -L "$file"
+            cp -- "$file" _site/
+          done
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy approved static site
+        id: deployment
+        uses: actions/deploy-pages@v4
