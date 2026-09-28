@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https://play-lh.googleusercontent.com https://lh3.googleusercontent.com https://*.mzstatic.com; connect-src 'self'; object-src 'none'; base-uri 'none'">
+  <title>游戏观察站 · 全球预约与上线</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <header class="hero"><div class="shell">
+    <p class="eyebrow">GAME OBSERVATORY / 公开只读</p>
+    <h1>下一款值得关注的游戏。</h1>
+    <p class="intro">追踪 Google Play 与 App Store 的预约、上线和地区覆盖。让变化一目了然。</p>
+    <div class="meta"><span id="updated">数据更新时间：读取中…</span><span>监控最近运行时间：此静态快照不提供实时运行信息</span></div>
+  </div></header>
+  <main class="shell">
+    <section class="toolbar" aria-label="筛选游戏">
+      <label class="search">搜索游戏<input id="search" type="search" placeholder="游戏名称或商店 ID" autocomplete="off"></label>
+      <label>平台<select id="platform"><option value="all">全部平台</option><option value="googleplay">Google Play</option><option value="appstore">App Store</option><option value="cross">已确认跨平台</option></select></label>
+      <label>状态<select id="status"><option value="all">全部状态</option><option value="prereg">预约中</option><option value="released">已上线</option><option value="unknown">待核实</option></select></label>
+    </section>
+    <div class="section-heading"><h2>游戏动态</h2><span id="count" role="status" aria-live="polite"></span></div>
+    <p id="message" role="status">正在读取公开数据…</p>
+    <section id="cards" class="cards" aria-label="游戏卡片"></section>
+    <footer><strong>关于这些时间</strong><p>预约发现为监控首次观察，不代表官方开放时间。上线确认按各地区可信记录展示，不代表全球同步上线。无可靠证据时显示待核实。跨平台关系仅展示人工已确认配对。</p><p>无业务变化时页面不重新发布；数据更新时间不是监控最近运行时间。本站只读，无登录、审核或通知操作。</p></footer>
+  </main>
+</body>
+</html>
