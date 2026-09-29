@@ -38,15 +38,47 @@ function card(item) {
   // Screenshots have no src or DOM node until the user expands this card.
   details.addEventListener('toggle',()=>{if(!details.open||details.dataset.loaded)return;details.dataset.loaded='true';const content=el('div',undefined,'detail-body');if(games.length===2)content.append(el('p','人工已确认关联；两平台各自独立取证，不互相推断状态。'));for(const game of games)content.append(storeDetail(game));details.append(content);});article.append(details);return article;
 }
+// Exported dates are UTC+8 minute-precision observations, never browser-local dates.
+function preregTime(value) {
+  if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(value))return null;
+  const iso=value.replace(' ','T')+':00+08:00',time=Date.parse(iso);
+  if(!Number.isFinite(time))return null;
+  const check=new Date(time+8*3600000).toISOString().slice(0,16).replace('T',' ');
+  return check===value?time:null;
+}
+const gameKey=g=>`${g.platform}:${g.id}`;
+const itemKey=item=>item.games.map(gameKey).join('|');
+function firstTime(item){const times=item.games.map(g=>preregTime(g.first_preregistration_observed)).filter(t=>t!==null);return times.length?Math.min(...times):null;}
+function compareItems(a,b){
+  const x=firstTime(a),y=firstTime(b);
+  if(x!==y){if(x===null)return 1;if(y===null)return -1;return y-x;}
+  const ak=itemKey(a),bk=itemKey(b);return ak<bk?-1:ak>bk?1:0;
+}
+function buildItems(data){
+  const index=new Map(data.games.map(g=>[gameKey(g),g])),cross=new Map();
+  for(const pair of data.confirmed_pairs){
+    const gp=index.get(`googleplay:${pair.googleplay_id}`),ap=index.get(`appstore:${pair.appstore_id}`);
+    if(gp&&ap){const item={platform:'cross',games:[gp,ap],regions:pair.common_regions};cross.set(itemKey(item),item);}
+  }
+  return [...index.values()].map(g=>({platform:g.platform,games:[g]})).concat([...cross.values()]).sort(compareItems);
+}
+function visibleItems(items,platform='all',status='all',query=''){
+  // In the combined view confirmed pairs replace their standalone store cards.
+  // Store-specific views still use that store's own first-observed time.
+  const linked=new Set(items.filter(i=>i.platform==='cross').flatMap(i=>i.games.map(gameKey)));
+  query=query.trim().toLowerCase();
+  return items.filter(item=>(platform==='all'?(item.platform==='cross'||!linked.has(gameKey(item.games[0]))):item.platform===platform)
+    &&(status==='all'||item.games.some(g=>group(g.status)===status||g.regions.some(r=>group(r.status)===status)))
+    &&item.games.some(g=>`${g.name} ${g.id}`.toLowerCase().includes(query))).sort(compareItems);
+}
 let items=[];
 function render(){const query=document.querySelector('#search').value.trim().toLowerCase(),platform=document.querySelector('#platform').value,status=document.querySelector('#status').value;
-  const result=items.filter(item=>(platform==='all'||item.platform===platform)&&(status==='all'||item.games.some(g=>group(g.status)===status||g.regions.some(r=>group(r.status)===status)))&&item.games.some(g=>`${g.name} ${g.id}`.toLowerCase().includes(query)));
+  const result=visibleItems(items,platform,status,query);
   document.querySelector('#cards').replaceChildren(...result.map(card));document.querySelector('#count').textContent=`${result.length} 条记录`;
   const msg=document.querySelector('#message');msg.hidden=result.length>0;msg.textContent=items.length?'没有符合筛选条件的游戏。':'暂无公开游戏数据。';
 }
 async function start(){try{const response=await fetch('./public.json',{cache:'no-cache'});if(!response.ok)throw Error('load');const data=await response.json();if(data.schema!==1||!Array.isArray(data.games)||!Array.isArray(data.confirmed_pairs))throw Error('schema');
-  const index=new Map(data.games.map(g=>[`${g.platform}:${g.id}`,g]));items=data.games.map(g=>({platform:g.platform,games:[g]}));
-  for(const pair of data.confirmed_pairs){const gp=index.get(`googleplay:${pair.googleplay_id}`),ap=index.get(`appstore:${pair.appstore_id}`);if(gp&&ap)items.push({platform:'cross',games:[gp,ap],regions:pair.common_regions});}
+  items=buildItems(data);
   const date=new Date(data.data_updated_at);document.querySelector('#updated').textContent=`数据更新时间（UTC+8）：${Number.isNaN(date.getTime())?'待核实':new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(date)}`;
   for(const id of ['search','platform','status'])document.querySelector('#'+id).addEventListener('input',render);render();
 }catch{document.querySelector('#updated').textContent='数据更新时间：待核实';document.querySelector('#message').textContent='公开数据暂时无法读取，请稍后刷新。此处不会显示示例或过期的默认游戏。';}}
