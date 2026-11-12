@@ -17,11 +17,21 @@
     <div class="meta"><span id="updated">数据更新时间：读取中…</span><span>监控最近运行时间：此静态快照不提供实时运行信息</span></div>
   </div></header>
   <main class="shell">
-    <section class="toolbar" aria-label="筛选游戏">
+    <form id="filters" class="toolbar" aria-label="筛选游戏">
       <label class="search">搜索游戏<input id="search" type="search" placeholder="游戏名称或商店 ID" autocomplete="off"></label>
       <label>平台<select id="platform"><option value="all">全部平台</option><option value="googleplay">Google Play</option><option value="appstore">App Store</option><option value="cross">已确认跨平台</option></select></label>
       <label>状态<select id="status"><option value="all">全部状态</option><option value="prereg">预约中</option><option value="released">已上线</option><option value="unknown">待核实</option></select></label>
-    </section>
+      <label>地区<select id="market"><option value="all">全部地区</option></select></label>
+      <details class="tag-filter"><summary>游戏标签</summary><div id="tag-options" class="tag-options"></div></details>
+      <label>时间依据<select id="date-field"><option value="first_seen">游戏首次发现</option><option value="first_preregistration_observed">首次发现时间</option><option value="expected_release">预计上线</option></select></label>
+      <label>时间范围<select id="range"><option value="all">全部时间</option><option value="7">近 7 天</option><option value="30">近 30 天</option><option value="90">近 90 天</option><option value="180">近 180 天</option><option value="custom">自定义</option></select></label>
+      <div id="custom-range" class="custom-range" hidden>
+        <label>开始日期<input id="from" type="date"></label>
+        <label>结束日期<input id="to" type="date"></label>
+      </div>
+      <label>排序<select id="sort"><option value="first_seen">首次发现 · 最新优先</option><option value="expected_release">预计上线 · 最早优先</option></select></label>
+      <button type="reset">重置筛选</button>
+    </form>
     <div class="section-heading"><h2>游戏动态</h2><span id="count" role="status" aria-live="polite"></span></div>
     <p id="message" role="status">正在读取公开数据…</p>
     <section id="cards" class="cards" aria-label="游戏卡片"></section>
